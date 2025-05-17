@@ -4,10 +4,40 @@ import React, { useState } from 'react';
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log('Login:', { email, password });
+    setError('');
+    if (!email || !password) {
+      setError('Please enter email and password');
+      return;
+    }
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        credentials: 'include', // to include cookies
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'Login failed');
+        return;
+      }
+
+      // Login successful - handle user data as needed
+      console.log('Login successful:', data.user);
+      // Redirect or update UI accordingly
+
+    } catch (err) {
+      setError('Server error. Please try again later.');
+      console.error('Login error:', err);
+    }
   };
 
   return (
@@ -40,6 +70,9 @@ const LoginPage = () => {
             className="w-full mb-4 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          {error && (
+            <p className="text-red-600 text-sm mb-4">{error}</p>
+          )}
           <div className="flex justify-between items-center mb-4 text-sm">
             <label className="text-gray-600">
               <input type="checkbox" className="mr-1" /> Remember me

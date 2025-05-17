@@ -1,11 +1,26 @@
 const mongoose = require('mongoose');
 
 const providerSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  name: {
+    type: String,
     required: true
   },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  role: {
+    type: String,
+    enum: ['user', 'provider'],
+    default: 'provider'
+  },
+
   services: [{
     type: String,
     required: true
@@ -60,7 +75,7 @@ const providerSchema = new mongoose.Schema({
     type: String,
     default: 'default.jpg'  // Optionally, a default image or URL for the provider
   },
-  phoneNumber: {
+  phone: {
     type: String,
     required: true
   },

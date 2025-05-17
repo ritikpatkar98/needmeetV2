@@ -11,6 +11,7 @@ const SignupPage = () => {
     services: [],
     location: '',
     phone: '',
+    address: '',
     experience: '',
     priceRange: '',
   });
@@ -72,7 +73,7 @@ const SignupPage = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/signup', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -372,6 +373,32 @@ const SignupPage = () => {
               {errors.phone && (
                 <p id="phone-error" className="text-red-500 text-xs mt-1">
                   {errors.phone}
+                </p>
+              )}
+            </div>
+
+            {/* Address */}
+            <div className="mb-6">
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                Address
+              </label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="Enter your address"
+                className={`w-full px-4 py-2 border ${
+                  errors.address ? 'border-red-500' : 'border-gray-300'
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
+                required
+                aria-invalid={!!errors.address}
+                aria-describedby={errors.address ? 'address-error' : undefined}
+              />
+              {errors.address && (
+                <p id="address-error" className="text-red-500 text-xs mt-1">
+                  {errors.address}
                 </p>
               )}
             </div>

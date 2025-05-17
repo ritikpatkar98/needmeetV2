@@ -10,8 +10,11 @@ import Plumber from './pages/Plumber';
 import Electrician from './pages/Electrician';
 import Cleaning from './pages/Cleaning';
 import Painter from './pages/Painter';
-import Carpenter from './pages/Carpenter'
+import Carpenter from './pages/Carpenter';
+
 import BookingPage from './pages/Booking';
+import { ToastContainer } from 'react-toastify';
+import Tutor from './pages/Tutor';
 const App = () => {
   return (
     <Router>
@@ -26,8 +29,10 @@ const App = () => {
         <Route path="/services/cleaning" element={<Cleaning />} />
         <Route path="/services/painting" element={<Painter />} />
         <Route path="/services/carpenter" element={<Carpenter />} />
+        <Route path="/services/Tutor" element={<Tutor />} />
         <Route path="/bookings" element={<BookingPage />} />
       </Routes>
+      <ToastContainer position='top-right' />
     </Router>
   );
 };

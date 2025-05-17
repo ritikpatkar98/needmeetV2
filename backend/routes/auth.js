@@ -1,46 +1,52 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
 const router = express.Router();
 const User = require('../models/User');
 const Provider = require('../models/Provider');
 
-// Create data directory if it doesn't exist
-const dataDir = path.join(__dirname, '../data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
-}
-
-// Define dataFile path ONCE
-const dataFile = path.join(dataDir, 'users.json');
-
-// Ensure users.json exists with valid JSON array
-if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, '[]', 'utf8');
-}
-
-// GET route to test the API
-router.get('/', (req, res) => {
-  res.json({ message: 'Auth API is working' });
-});
-
-// Register
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, password, role, services, location, phone } = req.body;
-    
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash the password before saving
-    const user = new User({
+    const {
       name,
       email,
-      password, // Store hashed password
+      password,
+      role,
+      services,
+      location,
+      phone,
+      priceRange,
+      experience,
+      address,
+    } = req.body;
+
+    // Basic validation
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'Please provide name, email, password, and role' });
+    }
+
+    try {
+      const existingUser = await User.findOne({ email });
+      const existingProvider = await Provider.findOne({ email });
+      if (existingUser || existingProvider) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    } catch (dbErr) {
+      if (dbErr.code === 11000) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+      throw dbErr;
+    }
+
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let user = null;
+    let provider = null;
+    if(role == "user" || role == "User"){
+     user = new User({
+      name,
+      email,
+      password: hashedPassword,
       role,
       services: services || [],
       location: location || '',
@@ -48,25 +54,67 @@ router.post('/signup', async (req, res) => {
     });
 
     await user.save();
+    }
+    
+    
 
-    // If the user is a provider, create a provider document
-    if (role === 'provider') {
-      const provider = new Provider({
-        userId: user._id,
-        services: [],
-        location: '',
-        experience: 0,
-        priceRange: { min: 0, max: 0 }
+    // If the user is a provider, create a provider document with required fields
+    if (role === 'Provider' || role === 'provider') {
+      // Convert experience string to number (e.g., '1-3 years' => 2)
+      let expNumber = 0;
+      if (experience && typeof experience === 'string') {
+        const match = experience.match(/(\d+)/);
+        expNumber = match ? parseInt(match[1], 10) : 0;
+      }
+
+      // Convert priceRange string to min and max numbers (e.g., '₹100-₹300/hour')
+      let priceMin = 0;
+      let priceMax = 0;
+      if (priceRange && typeof priceRange === 'string') {
+        const priceMatch = priceRange.match(/₹(\d+)-₹(\d+)/);
+        if (priceMatch) {
+          priceMin = parseInt(priceMatch[1], 10);
+          priceMax = parseInt(priceMatch[2], 10);
+        }
+      }
+
+      provider = new Provider({
+        name,
+        email,
+        password: hashedPassword,
+        role: 'provider',
+        services: services && services.length ? services : [],
+        location: location || '',
+        phone: phone || '',
+        address: address || '',
+        experience: expNumber,
+        priceRange: {
+          min: priceMin,
+          max: priceMax,
+        },
       });
+
       await provider.save();
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign(
+      { userId: (role === 'Provider' || role === 'provider') ? provider._id : user._id },
+      process.env.JWT_SECRET || 'your_jwt_secret',
+      { expiresIn: '1h' }
+    );
 
-    res.status(201).json({ 
-      user: { ...user.toJSON(), password: undefined }, 
-      token 
+    // Set token in httpOnly cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 3600000, // 1 hour
+    });
+
+    res.status(201).json({
+      user: (role === 'Provider' || role === 'provider') ? { ...provider.toJSON(), password: undefined } : { ...user.toJSON(), password: undefined },
+      // token // token no longer sent in response body
     });
   } catch (err) {
     console.error(err);
@@ -74,40 +122,103 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// Login
 router.post('/login', async (req, res) => {
   try {
+    console.log('Login request body:', req);
     const { email, password } = req.body;
-    console.log('Login attempt:', { email, password });
+    console.log('Login attempt with email:', email);
+    console.log('Login attempt with password:', password);
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
     const user = await User.findOne({ email });
-    
-    if (!user) {
+    const provider = await Provider.findOne({ email });
+    if (!user && !provider) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
-    
-    // Compare entered password with hashed password
-    
-    const isMatch = await bcrypt.compare(password, user.password);
-    // console.log('User found:', isMatch);
+    // Check if the user is a provider
+    if (provider) {
+      // Check password for provider
+      const isMatch = await bcrypt.compare(password, provider.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Invalid password' });
+      }
+    } else {
+      // Check password for user
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Invalid password' });
+      }
+    }
+    // Generate JWT token
+    if (!user && !provider) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    let isMatch;
+    if (user) {
+      isMatch = await bcrypt.compare(password, user.password);
+    }
+    if (provider) {
+      isMatch = await bcrypt.compare(password, provider.password);
+    }
+
+
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid Passowrd' });
+      return res.status(400).json({ message: 'Invalid password' });
     }
 
     // Generate JWT token on successful login
-    const token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
+    if(user){
+      const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET || 'your_jwt_secret',  
+        { expiresIn: '1d' }
+      );
+      // Set token in httpOnly cookie 
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 86400000, // 1 day
+      });
+      res.json({
+        user: { ...user.toJSON(), password: undefined },
+        // token // token no longer sent in response body
+      });
 
-    res.json({
-      user: { ...user.toJSON(), password: undefined },
-      token
-    });
+    }else{
+      const token = jwt.sign(
+        { userId: provider._id },
+        process.env.JWT_SECRET || 'your_jwt_secret',
+        { expiresIn: '1d' }
+      );
+      // Set token in httpOnly cookie
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 86400000, // 1 day
+      });
+
+      res.json({
+        user: { ...provider.toJSON(), password: undefined },
+        // token // token no longer sent in response body
+      });
+    }
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// GET all users (for frontend login & debugging)
-router.get('/users', async (req, res) => {
+router.post('/logout', (req, res) => {
+  res.json({ message: 'Logged out successfully' });
+});
+
+router.get('/all/users', async (req, res) => {
   try {
     const users = await User.find({}, '-password');
     res.json(users);
@@ -115,5 +226,15 @@ router.get('/users', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+router.get('/all/provider', async (req, res) => {
+  try {
+    const users = await Provider.find({}, '-password');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 module.exports = router;

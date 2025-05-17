@@ -1,8 +1,10 @@
 require('dotenv').config(); // Load .env
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 
 // Initialize app first
 const app = express();
@@ -42,6 +44,7 @@ app.use(cors({
 }));
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -62,6 +65,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(8080, () => {
+app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

@@ -127,11 +127,11 @@ const HomePage = () => {
   const topProviders = [
     {
       id: 101,
-      name: 'Rajesh Plumbing',
+      name: 'subhash Plumbing',
       service: 'Plumber',
       rating: 4.8,
       reviews: 243,
-      price: '₹499/hour',
+      price: '₹500 per work',
       location: 'Delhi',
       experience: '10 years exp',
       image: 'https://images.unsplash.com/photo-1600881336146-562bc8ffa1e3?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
@@ -142,7 +142,7 @@ const HomePage = () => {
       service: 'Electrician',
       rating: 4.7,
       reviews: 187,
-      price: '₹399/hour',
+      price: '₹500 per work',
       location: 'Noida',
       experience: '8 years exp',
       image: 'https://images.unsplash.com/photo-1581093450021-4a7360e9aabd?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',

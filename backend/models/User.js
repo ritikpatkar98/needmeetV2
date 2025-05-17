@@ -41,14 +41,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'default.jpg'  // Optionally, a default profile picture
   },
-  experience : {
-    type: String,
-    default: ''
-  },
-  priceRange : {
-    type: Number,
-    default: ''
-  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -59,19 +51,14 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash the password before saving the user document
-userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
-    // Hash the password with 10 rounds
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  this.updatedAt = Date.now();  // Update `updatedAt` whenever the document is modified
-  next();
-});
 
-// Compare password method to validate login attempts
-// userSchema.methods.comparePassword = async function (candidatePassword) {
-//   return await bcrypt.compare(candidatePassword, this.password);
-// };
+// userSchema.pre('save', async function (next) {
+//   if (this.isModified('password')) {
+//     this.password = await bcrypt.hash(this.password, 10);
+//   }
+//   this.updatedAt = Date.now();  
+//   next();
+// });
+
 
 module.exports = mongoose.model('User', userSchema);
