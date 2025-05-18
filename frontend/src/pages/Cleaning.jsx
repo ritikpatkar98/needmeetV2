@@ -9,7 +9,7 @@ const Cleaning = () => {
   const dispatch = useDispatch();
   const { providers, loading, error } = useSelector(state => state.provider);
   useEffect(() => {
-    dispatch(fetchProvidersByServiceType('electrician'));
+    dispatch(fetchProvidersByServiceType('cleaning'));
   }, [dispatch]);
 
   return (

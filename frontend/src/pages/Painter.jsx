@@ -8,7 +8,7 @@ const Painter = () => {
   const { providers, loading, error } = useSelector(state => state.provider);
 
   useEffect(() => {
-    dispatch(fetchProvidersByServiceType('electrician'));
+    dispatch(fetchProvidersByServiceType('painter'));
   }, [dispatch]);
   return (
     <div>

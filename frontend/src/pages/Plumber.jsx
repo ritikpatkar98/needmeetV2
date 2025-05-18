@@ -10,7 +10,7 @@ const Plumber = () => {
   const { providers, loading, error } = useSelector(state => state.provider);
   
   useEffect(() => {
-    dispatch(fetchProvidersByServiceType('electrician'));
+    dispatch(fetchProvidersByServiceType('plumber'));
   }, [dispatch]);
 
   return (
@@ -29,7 +29,7 @@ const Plumber = () => {
             <h2 className="text-3xl font-bold text-center mb-12">Our Carpentry Services</h2>
             <ProviderList providers={providers} />
        </div>
-       
+
       {/* Why Choose Us */}
       <div className="bg-gray-50 py-16 px-4">
         <div className="max-w-6xl mx-auto">
