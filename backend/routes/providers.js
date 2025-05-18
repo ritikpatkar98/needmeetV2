@@ -59,7 +59,11 @@ router.get('/service/:serviceType', async (req, res) => {
     const providers = await Provider.find({
       services: { $regex: req.params.serviceType, $options: 'i' }
     }).populate('userId', '-password').populate('reviews.userId', '-password');
+
+    console.log(providers);
     res.json(providers);
+
+
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

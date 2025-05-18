@@ -38,6 +38,7 @@ export const fetchProvidersByServiceType = (serviceType) => async (dispatch) => 
   dispatch(requestFetchProviders());
   try {
     const response = await axios.get(`http://localhost:8080/api/providers/service/${serviceType}`);
+    console.log(response.data);
     dispatch(successFetchProviders(response.data));
     toast.success(`Providers for ${serviceType} fetched successfully`);
   } catch (error) {

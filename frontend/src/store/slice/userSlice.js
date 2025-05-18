@@ -125,6 +125,7 @@ export const userLogout = () => async (dispatch) => {
         });
         dispatch(userSlice.actions.successLogout());
         localStorage.removeItem('isAuthenticated');
+        alert(response.data.message);
         toast.success("Logout successful");
     } catch (error) {
         dispatch(userSlice.actions.failedLogout(error.message));
