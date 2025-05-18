@@ -1,77 +1,36 @@
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProvidersByServiceType } from '../store/slice/providerSlice';
+import ProviderList from '../components/ProviderList';
+import { useEffect } from 'react';
 
 const Electrician = () => {
+
+  const dispatch = useDispatch();
+  const { providers, loading, error } = useSelector(state => state.provider);
+  
+  useEffect(() => {
+    dispatch(fetchProvidersByServiceType('electrician'));
+  }, [dispatch]);
+
   return (
     <div>
       {/* Hero Section */}
-      <div className="hero-section bg-blue-50 py-16 px-4 text-center">
-        <h1 className="text-4xl font-bold text-blue-800 mb-4">Professional Electrical Services</h1>
-        <p className="text-xl text-gray-600 mb-8">Expert electrical solutions for your home and business</p>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg">
-          Book Now
-        </button>
-      </div>
-
-      {/* Services Section */}
       <div className="services-section py-16 px-4 max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12">Our Electrical Services</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[
-            {
-              id: 1,
-              title: "Electrical Installation",
-              description: "Complete electrical wiring and installation services",
-              price: "₹2000/point",
-              time: "1-2 days"
-            },
-            {
-              id: 2,
-              title: "Repairs & Maintenance",
-              description: "Quick electrical repairs and routine maintenance",
-              price: "₹500/hour",
-              time: "2-3 hours"
-            },
-            {
-              id: 3,
-              title: "Circuit Breaker Service",
-              description: "Installation and repair of circuit breakers",
-              price: "₹1500/unit",
-              time: "1-2 hours"
-            },
-            {
-              id: 4,
-              title: "Emergency Services",
-              description: "24/7 emergency electrical support",
-              price: "₹1000/visit",
-              time: "ASAP"
-            },
-            {
-              id: 5,
-              title: "Home Safety Inspection",
-              description: "Comprehensive electrical safety audits",
-              price: "₹2500",
-              time: "3-4 hours"
-            },
-            {
-              id: 6,
-              title: "Commercial Services",
-              description: "Electrical solutions for businesses and industries",
-              price: "Custom",
-              time: "Project based"
-            }
-          ].map(service => (
-            <div key={service.id} className="service-card bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-semibold mb-2">{service.title}</h3>
-              <p className="text-gray-600 mb-4">{service.description}</p>
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-lg">{service.price}</span>
-                <span className="text-gray-500">{service.time}</span>
-              </div>
-              <button className="mt-4 w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded-lg font-medium">
-                Book Service
-              </button>
-            </div>
-          ))}
+        <div className="carpentry-service-page">
+          <div className="hero-section bg-blue-50 py-16 px-4 text-center">
+            <h1 className="text-4xl font-bold text-blue-800 mb-4">Expert Carpentry Services</h1>
+            <p className="text-xl text-gray-600 mb-8">Book skilled carpenters for all your wooden furniture and fixture needs</p>
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg">
+              Book Now
+            </button>
+          </div>
+
+          <div className="services-section py-16 px-4 max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Our Carpentry Services</h2>
+            <ProviderList providers={providers} />
+          </div>
         </div>
       </div>
 

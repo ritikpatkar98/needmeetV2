@@ -1,43 +1,29 @@
 // src/pages/LoginPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { userLogin } from '../store/slice/userSlice';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { error, isAuthenticated } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
     if (!email || !password) {
-      setError('Please enter email and password');
       return;
     }
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        credentials: 'include', // to include cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Login failed');
-        return;
-      }
-
-      // Login successful - handle user data as needed
-      console.log('Login successful:', data.user);
-      // Redirect or update UI accordingly
-
-    } catch (err) {
-      setError('Server error. Please try again later.');
-      console.error('Login error:', err);
-    }
+    dispatch(userLogin({ email, password }));
   };
 
   return (

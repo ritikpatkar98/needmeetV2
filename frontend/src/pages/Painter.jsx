@@ -1,6 +1,15 @@
-import React from 'react'
+import React, { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProvidersByServiceType } from '../store/slice/providerSlice';
+import ProviderList from '../components/ProviderList';
 
 const Painter = () => {
+  const dispatch = useDispatch();
+  const { providers, loading, error } = useSelector(state => state.provider);
+
+  useEffect(() => {
+    dispatch(fetchProvidersByServiceType('electrician'));
+  }, [dispatch]);
   return (
     <div>
       {/* Hero Section */}
@@ -11,68 +20,10 @@ const Painter = () => {
           Book Now
         </button>
       </div>
-
       {/* Services Section */}
       <div className="services-section py-16 px-4 max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">Our Painting Services</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[
-            {
-              id: 1,
-              title: "Interior Painting",
-              description: "Professional interior wall painting with premium quality paints",
-              price: "₹15/sqft",
-              time: "2-3 days"
-            },
-            {
-              id: 2, 
-              title: "Exterior Painting",
-              description: "Weather-resistant exterior painting solutions for your building",
-              price: "₹18/sqft",
-              time: "4-5 days"
-            },
-            {
-              id: 3,
-              title: "Texture Painting",
-              description: "Custom texture designs and decorative wall finishes",
-              price: "₹25/sqft", 
-              time: "3-4 days"
-            },
-            {
-              id: 4,
-              title: "Wood Painting",
-              description: "Furniture and woodwork painting and polishing services",
-              price: "₹999/piece",
-              time: "1-2 days"
-            },
-            {
-              id: 5,
-              title: "Waterproofing",
-              description: "Long-lasting waterproofing solutions with warranty",
-              price: "₹35/sqft",
-              time: "2-3 days"
-            },
-            {
-              id: 6,
-              title: "Commercial Painting",
-              description: "Large scale painting services for offices and businesses",
-              price: "Custom",
-              time: "Project based"
-            }
-          ].map(service => (
-            <div key={service.id} className="service-card bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-semibold mb-2">{service.title}</h3>
-              <p className="text-gray-600 mb-4">{service.description}</p>
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-lg">{service.price}</span>
-                <span className="text-gray-500">{service.time}</span>
-              </div>
-              <button className="mt-4 w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded-lg font-medium">
-                Book Service
-              </button>
-            </div>
-          ))}
-        </div>
+        <h2 className="text-3xl font-bold text-center mb-12">Our Carpentry Services</h2>
+        <ProviderList providers={providers} />
       </div>
 
       {/* Why Choose Us */}

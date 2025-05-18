@@ -1,5 +1,4 @@
-// src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage'; // ✅ Import HomePage
@@ -15,7 +14,20 @@ import Carpenter from './pages/Carpenter';
 import BookingPage from './pages/Booking';
 import { ToastContainer } from 'react-toastify';
 import Tutor from './pages/Tutor';
+import BookingDetailPage from './pages/BookingDetailPage';
+import { useDispatch } from 'react-redux';
+import { fetchUser } from './store/slice/userSlice';
 const App = () => {
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (isAuthenticated === 'true') {
+      dispatch(fetchUser());
+    }
+  }, []);
+
   return (
     <Router>
       <Navbar />
@@ -31,6 +43,7 @@ const App = () => {
         <Route path="/services/carpenter" element={<Carpenter />} />
         <Route path="/services/Tutor" element={<Tutor />} />
         <Route path="/bookings" element={<BookingPage />} />
+        <Route path="/book/:id" element={<BookingDetailPage />} />
       </Routes>
       <ToastContainer position='top-right' />
     </Router>
@@ -38,4 +51,3 @@ const App = () => {
 };
 
 export default App;
-

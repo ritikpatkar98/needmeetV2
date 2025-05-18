@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { request } from 'express';
-
+import { toast } from 'react-toastify';
+import axios from 'axios';
 const userSlice = createSlice({
     name: "user",
     initialState:{
@@ -42,7 +42,7 @@ const userSlice = createSlice({
             state.error = null;
         },
         failedLogin(state,action){
-            state,loading = false;
+            state.loading = false;
             state.user = [];
             state.isAuthenticated = false;
             state.error = action.payload;
@@ -55,70 +55,100 @@ const userSlice = createSlice({
         },
         failedLogout(state,action){
             state.loading = false;
-        }
+        },
+        requestFetchUser(state,action){
+            state.loading = true;
+            state.user = [];
+            state.isAuthenticated = false;
+            state.error = null;
+        },
+        successFetchUser(state,action){
+            state.loading = false;
+            state.user = action.payload;
+            state.isAuthenticated = true;
+            state.error = null;
+        },
+        failedFetchUser(state,action){
+            state.loading = false;
+            state.user = [];
+            state.isAuthenticated = false;
+            state.error = action.payload;
+        },
     }
 })
 
 
-export const userRegister = (data) => async (dispatch) => {
+export const userRegister = (userData) => async (dispatch) => {
+    console.log(userData)
     dispatch(userSlice.actions.requestRegister());
     try {
-        const response = await axios.post(``,data, {
-            method: 'POST',
+        const response = await axios.post(`http://localhost:8080/api/auth/signup`, userData, {
             headers: {
                 'Content-Type': 'application/json'
             },
+            withCredentials: true,
         });
-
-        const data = await response.json();
-        if (response.ok) {
-            dispatch(userSlice.actions.successRegister(data));
-            toast.sucess("Registration successful");
-        }
+        const data = response.data;
+        dispatch(userSlice.actions.successRegister(data));
+        toast.success("Registration successful");
     } catch (error) {
         dispatch(userSlice.actions.failedRegister(error.message));
-        toast.error("Registration failed");
+        toast.error(error.response?.data?.message || "Registration failed");
     }
 }
 
 
-export const userLogin = (data) => async (dispatch) => {
+export const userLogin = ({email,password}) => async (dispatch) => {
     dispatch(userSlice.actions.requestLogin());
     try {
-        const response = await axios.post(``,data, {
-            method: 'POST',
+        const response = await axios.post(`http://localhost:8080/api/auth/login`, {email,password}, {
             headers: {
                 'Content-Type': 'application/json'
             },
+            withCredentials: true,
         });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            dispatch(userSlice.actions.successLogin(data));
-            toast.sucess("Login successful");
-        }
+        const data = response.data;
+        dispatch(userSlice.actions.successLogin(data));
+        localStorage.setItem('isAuthenticated', 'true');
+        toast.success("Login successful");
     } catch (error) {
         dispatch(userSlice.actions.failedLogin(error.message));
-        toast.error("Login failed");
+        toast.error(error.response?.data?.message || "Login failed");
     }
 }
 
 export const userLogout = () => async (dispatch) => {
     dispatch(userSlice.actions.requestLogout());
     try {
-        const response = await axios.get(``,{
+        const response = await axios.post(`http://localhost:8080/api/auth/logout`, {}, {
             withCredentials: true,
         });
-
-        if (response.ok) {
-            dispatch(userSlice.actions.successLogout());
-            toast.sucess("Logout successful");
-        }
+        dispatch(userSlice.actions.successLogout());
+        localStorage.removeItem('isAuthenticated');
+        toast.success("Logout successful");
     } catch (error) {
         dispatch(userSlice.actions.failedLogout(error.message));
         toast.error("Logout failed");
     }
 }
+
+
+
+export const fetchUser = () => async (dispatch) => {
+    dispatch(userSlice.actions.requestFetchUser());
+    try {
+        const response = await axios.get(`http://localhost:8080/api/auth/me`, {
+            withCredentials: true,
+        });
+        const data = response.data;
+        dispatch(userSlice.actions.successFetchUser(data));
+        toast.success("User fetched successfully");
+    } catch (error) {
+        dispatch(userSlice.actions.failedFetchUser(error.message));
+        toast.error("Failed to fetch user");
+    }
+}
+
+
 
 export default userSlice.reducer;

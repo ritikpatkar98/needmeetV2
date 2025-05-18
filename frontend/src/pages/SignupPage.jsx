@@ -1,13 +1,18 @@
-import React, { useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 
-const SignupPage = () => {
+import React, { useState, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { Helmet } from 'react-helmet';
+import { userRegister } from '../store/slice/userSlice';
+import { useNavigate } from 'react-router-dom';
+import { Check, ChevronLeft, Eye, EyeOff } from 'lucide-react';
+
+export default function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'Customer',
+    confirmPassword: '',
+    role: 'user',
     services: [],
     location: '',
     phone: '',
@@ -15,455 +20,354 @@ const SignupPage = () => {
     experience: '',
     priceRange: '',
   });
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState(1);
+  const [showPassword, setShowPassword] = useState(false);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Predefined options
-  const servicesOptions = [
-    'Plumber',
-    'Electrician',
-    'Cleaning',
-    'Painting',
-    'Carpenter',
-    'Tutor',
-  ];
+  const servicesOptions = ['Plumber', 'Electrician', 'Cleaning', 'Painting', 'Carpenter', 'Tutor'];
   const experienceOptions = ['1-3 years', '4-6 years', '7-10 years', '10+ years'];
   const priceRangeOptions = ['₹100-₹300/hour', '₹300-₹500/hour', '₹500-₹800/hour', '₹800+/hour'];
 
-  // Validation function
-  const validateForm = useCallback(() => {
+  const validateStep1 = useCallback(() => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/))
-      newErrors.email = 'Invalid email address';
-    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (formData.role === 'Provider') {
-      if (!formData.services.length) newErrors.services = 'At least one service is required';
-      if (!formData.experience) newErrors.experience = 'Experience is required';
-      if (!formData.priceRange) newErrors.priceRange = 'Price range is required';
-    }
-    if (!formData.location.trim()) newErrors.location = 'Location is required';
-    if (!formData.phone.match(/^\+?\d{10,12}$/)) newErrors.phone = 'Invalid phone number';
+    if (!formData.email.match(/^[\w.-]+@[\w.-]+\.\w+$/)) newErrors.email = 'Invalid email';
+    if (formData.password.length < 6) newErrors.password = 'Password must be 6+ characters';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     return newErrors;
   }, [formData]);
 
-  // Handle input changes
+  const validateStep2 = useCallback(() => {
+    const newErrors = {};
+    if (!formData.location.trim()) newErrors.location = 'Location is required';
+    if (!formData.phone.match(/^\+?\d{10,12}$/)) newErrors.phone = 'Invalid phone number';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    
+    if (formData.role === 'Provider') {
+      if (!formData.services.length) newErrors.services = 'Select at least one service';
+      if (!formData.experience) newErrors.experience = 'Experience is required';
+      if (!formData.priceRange) newErrors.priceRange = 'Price range is required';
+    }
+    return newErrors;
+  }, [formData]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // Handle multi-select services
-  const handleServicesChange = (e) => {
-    const options = Array.from(e.target.selectedOptions, (option) => option.value);
-    setFormData((prev) => ({ ...prev, services: options }));
+  const handleServiceToggle = (service) => {
+    setFormData(prev => {
+      const newServices = prev.services.includes(service)
+        ? prev.services.filter(s => s !== service)
+        : [...prev.services, service];
+      
+      return { ...prev, services: newServices };
+    });
     if (errors.services) setErrors((prev) => ({ ...prev, services: '' }));
   };
 
-  // Handle form submission
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length) {
-      setErrors(validationErrors);
+  const handleNextStep = () => {
+    const stepErrors = validateStep1();
+    if (Object.keys(stepErrors).length) {
+      setErrors(stepErrors);
       return;
     }
+    setStep(2);
+  };
 
+  const handlePrevStep = () => {
+    setStep(1);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const stepErrors = validateStep2();
+    if (Object.keys(stepErrors).length) {
+      setErrors(stepErrors);
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) throw new Error('Signup failed');
-      navigate('/login');
+      // Remove confirmPassword before submitting
+      const submitData = { ...formData };
+      delete submitData.confirmPassword;
+      await dispatch(userRegister(submitData));
+      navigate('/');
     } catch (error) {
-      setErrors({ form: 'Signup failed. Please try again.' });
+      setErrors({ form: error.message || 'Signup failed' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <Helmet>
-        <title>NeedMeet - Sign Up</title>
-        <meta
-          name="description"
-          content="Join NeedMeet to book or provide trusted local services like plumbing, electrical work, and more."
-        />
-      </Helmet>
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
 
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white py-16 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-pattern opacity-10"
-          style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}
-        ></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight animate-fade-in">
-              Join NeedMeet Today
-            </h1>
-            <p className="text-lg md:text-xl mb-8 opacity-90 animate-fade-in delay-100">
-              Sign up as a customer or provider to access trusted local services
-            </p>
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Signup | NeedMeet</title>
+      </Helmet>
+      
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
+        <div>
+          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Join NeedMeet to connect with service providers or offer your services
+          </p>
+          {errors.form && (
+            <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">
+              {errors.form}
+            </div>
+          )}
+        </div>
+        
+        {/* Step indicator */}
+        <div className="flex justify-center items-center space-x-4">
+          <div className={`flex items-center justify-center h-8 w-8 rounded-full ${step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+            1
+          </div>
+          <div className={`h-1 w-8 ${step >= 2 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
+          <div className={`flex items-center justify-center h-8 w-8 rounded-full ${step >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+            2
           </div>
         </div>
-      </div>
 
-      {/* Form Section */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 animate-slide-up">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Create Your Account</h2>
-          {errors.form && (
-            <p className="text-red-500 text-sm mb-4 text-center">{errors.form}</p>
+        <form className="mt-8 space-y-6" onSubmit={step === 1 ? handleNextStep : handleSubmit}>
+          {step === 1 ? (
+            <>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full rounded-md border ${errors.name ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                    placeholder="Your full name"
+                  />
+                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full rounded-md border ${errors.email ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                    placeholder="you@example.com"
+                  />
+                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`mt-1 block w-full rounded-md border ${errors.password ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 pr-10`}
+                      placeholder="At least 6 characters"
+                    />
+                    <button 
+                      type="button" 
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center mt-1"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full rounded-md border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                    placeholder="Confirm your password"
+                  />
+                  {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700">I want to</label>
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                  >
+                    <option value="Customer">user</option>
+                    <option value="Provider">provider</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <div className="text-sm">
+                  <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+                    Already have an account?
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="group relative flex justify-center py-2 px-6 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="location" className="block text-sm font-medium text-gray-700">City</label>
+                  <input
+                    id="location"
+                    name="location"
+                    type="text"
+                    value={formData.location}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full rounded-md border ${errors.location ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                    placeholder="Your city"
+                  />
+                  {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
+                  <input
+                    id="address"
+                    name="address"
+                    type="text"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full rounded-md border ${errors.address ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                    placeholder="Your address"
+                  />
+                  {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className={`mt-1 block w-full rounded-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                    placeholder="Your phone number"
+                  />
+                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                </div>
+
+                {formData.role === 'Provider' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Services you provide</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {servicesOptions.map((service) => (
+                          <div 
+                            key={service}
+                            onClick={() => handleServiceToggle(service)}
+                            className={`cursor-pointer rounded-md px-3 py-2 text-sm flex items-center gap-2 ${
+                              formData.services.includes(service)
+                                ? 'bg-indigo-100 border border-indigo-300 text-indigo-800'
+                                : 'bg-gray-50 border border-gray-300 text-gray-800 hover:bg-gray-100'
+                            }`}
+                          >
+                            {formData.services.includes(service) && <Check size={16} className="text-indigo-600" />}
+                            {service}
+                          </div>
+                        ))}
+                      </div>
+                      {errors.services && <p className="mt-1 text-sm text-red-600">{errors.services}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="experience" className="block text-sm font-medium text-gray-700">Experience</label>
+                      <select
+                        id="experience"
+                        name="experience"
+                        value={formData.experience}
+                        onChange={handleChange}
+                        className={`mt-1 block w-full rounded-md border ${errors.experience ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                      >
+                        <option value="">Select Experience</option>
+                        {experienceOptions.map((exp) => (
+                          <option key={exp} value={exp}>{exp}</option>
+                        ))}
+                      </select>
+                      {errors.experience && <p className="mt-1 text-sm text-red-600">{errors.experience}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="priceRange" className="block text-sm font-medium text-gray-700">Price Range</label>
+                      <select
+                        id="priceRange"
+                        name="priceRange"
+                        value={formData.priceRange}
+                        onChange={handleChange}
+                        className={`mt-1 block w-full rounded-md border ${errors.priceRange ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500`}
+                      >
+                        <option value="">Select Price Range</option>
+                        {priceRangeOptions.map((range) => (
+                          <option key={range} value={range}>{range}</option>
+                        ))}
+                      </select>
+                      {errors.priceRange && <p className="mt-1 text-sm text-red-600">{errors.priceRange}</p>}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="flex justify-between items-center">
+                <button
+                  type="button"
+                  onClick={handlePrevStep}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <ChevronLeft size={16} className="mr-1" />
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="group relative flex justify-center py-2 px-6 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+                >
+                  {isSubmitting ? 'Creating account...' : 'Create account'}
+                </button>
+              </div>
+            </>
           )}
-          <form onSubmit={handleSignup} noValidate>
-            {/* Name */}
-            <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your name"
-                className={`w-full px-4 py-2 border ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                required
-                aria-invalid={!!errors.name}
-                aria-describedby={errors.name ? 'name-error' : undefined}
-              />
-              {errors.name && (
-                <p id="name-error" className="text-red-500 text-xs mt-1">
-                  {errors.name}
-                </p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                className={`w-full px-4 py-2 border ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                required
-                aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? 'email-error' : undefined}
-              />
-              {errors.email && (
-                <p id="email-error" className="text-red-500 text-xs mt-1">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                className={`w-full px-4 py-2 border ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                required
-                aria-invalid={!!errors.password}
-                aria-describedby={errors.password ? 'password-error' : undefined}
-              />
-              {errors.password && (
-                <p id="password-error" className="text-red-500 text-xs mt-1">
-                  {errors.password}
-                </p>
-              )}
-            </div>
-
-            {/* Role */}
-            <div className="mb-4">
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                Role
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
-                required
-              >
-                <option value="Customer">Customer</option>
-                <option value="Provider">Service Provider</option>
-              </select>
-            </div>
-
-            {/* Conditional Fields for Providers */}
-            {formData.role === 'Provider' && (
-              <>
-                {/* Services */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="services"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Services
-                  </label>
-                  <select
-                    id="services"
-                    name="services"
-                    multiple
-                    value={formData.services}
-                    onChange={handleServicesChange}
-                    className={`w-full px-4 py-2 border ${
-                      errors.services ? 'border-red-500' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                    aria-invalid={!!errors.services}
-                    aria-describedby={errors.services ? 'services-error' : undefined}
-                  >
-                    {servicesOptions.map((service) => (
-                      <option key={service} value={service}>
-                        {service}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.services && (
-                    <p id="services-error" className="text-red-500 text-xs mt-1">
-                      {errors.services}
-                    </p>
-                  )}
-                </div>
-
-                {/* Experience */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="experience"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Experience
-                  </label>
-                  <select
-                    id="experience"
-                    name="experience"
-                    value={formData.experience}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border ${
-                      errors.experience ? 'border-red-500' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                    required
-                    aria-invalid={!!errors.experience}
-                    aria-describedby={errors.experience ? 'experience-error' : undefined}
-                  >
-                    <option value="">Select experience</option>
-                    {experienceOptions.map((exp) => (
-                      <option key={exp} value={exp}>
-                        {exp}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.experience && (
-                    <p id="experience-error" className="text-red-500 text-xs mt-1">
-                      {errors.experience}
-                    </p>
-                  )}
-                </div>
-
-                {/* Price Range */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="priceRange"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Price Range
-                  </label>
-                  <select
-                    id="priceRange"
-                    name="priceRange"
-                    value={formData.priceRange}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border ${
-                      errors.priceRange ? 'border-red-500' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                    required
-                    aria-invalid={!!errors.priceRange}
-                    aria-describedby={errors.priceRange ? 'priceRange-error' : undefined}
-                  >
-                    <option value="">Select price range</option>
-                    {priceRangeOptions.map((range) => (
-                      <option key={range} value={range}>
-                        {range}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.priceRange && (
-                    <p id="priceRange-error" className="text-red-500 text-xs mt-1">
-                      {errors.priceRange}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Location */}
-            <div className="mb-4">
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                Location
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="Enter your location (e.g., Delhi)"
-                className={`w-full px-4 py-2 border ${
-                  errors.location ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                required
-                aria-invalid={!!errors.location}
-                aria-describedby={errors.location ? 'location-error' : undefined}
-              />
-              {errors.location && (
-                <p id="location-error" className="text-red-500 text-xs mt-1">
-                  {errors.location}
-                </p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div className="mb-6">
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Enter your phone number"
-                className={`w-full px-4 py-2 border ${
-                  errors.phone ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                required
-                aria-invalid={!!errors.phone}
-                aria-describedby={errors.phone ? 'phone-error' : undefined}
-              />
-              {errors.phone && (
-                <p id="phone-error" className="text-red-500 text-xs mt-1">
-                  {errors.phone}
-                </p>
-              )}
-            </div>
-
-            {/* Address */}
-            <div className="mb-6">
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                Address
-              </label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Enter your address"
-                className={`w-full px-4 py-2 border ${
-                  errors.address ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200`}
-                required
-                aria-invalid={!!errors.address}
-                aria-describedby={errors.address ? 'address-error' : undefined}
-              />
-              {errors.address && (
-                <p id="address-error" className="text-red-500 text-xs mt-1">
-                  {errors.address}
-                </p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition duration-200 transform hover:scale-105 ${
-                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              aria-label="Sign up"
-            >
-              {isSubmitting ? 'Signing Up...' : 'Sign Up'}
-            </button>
-          </form>
-
-          {/* Login Link */}
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link
-              to="/login"
-              className="text-blue-600 hover:text-blue-800 font-medium transition duration-200"
-              aria-label="Go to login page"
-            >
-              Log In
-            </Link>
-          </p>
-        </div>
+        </form>
       </div>
-
-      {/* Custom CSS for Animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.6s ease-out forwards;
-        }
-        .animate-slide-up {
-          animation: slideUp 0.8s ease-out forwards;
-        }
-        .delay-100 {
-          animation-delay: 0.1s;
-        }
-      `}</style>
     </div>
   );
-};
-
-export default SignupPage;
+}

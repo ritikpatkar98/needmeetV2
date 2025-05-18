@@ -2,11 +2,8 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 
-
-// Function to simulate sending alerts (can be extended to notify admins or authorities)
 function sendSOSAlert(sosDetails) {
   console.log('Sending SOS alert:', sosDetails);
-  // Add logic to send an email or SMS to notify admins or authorities
 }
 
 router.post('/', auth, (req, res) => {

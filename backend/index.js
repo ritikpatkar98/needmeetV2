@@ -39,7 +39,7 @@ app.get('/api/test-db', async (req, res) => {
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3003',
+  origin: 'http://localhost:5173',
   credentials: true
 }));
 app.use(morgan('dev'));

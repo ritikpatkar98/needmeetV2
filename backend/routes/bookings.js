@@ -54,25 +54,49 @@ router.post('/', auth, async (req, res) => {
 
 
 
-// Get user's bookings
 router.get('/user/:userId', auth, async (req, res) => {
   try {
+    const { page = 1, limit = DEFAULT_PAGE_SIZE } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
     const bookings = await Booking.find({ userId: req.params.userId })
       .populate('providerId')
-      .sort({ date: -1 });
-    res.json(bookings);
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalCount = await Booking.countDocuments({ userId: req.params.userId });
+
+    res.json({
+      bookings,
+      totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / limit),
+    });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching bookings', error: err.message });
   }
 });
 
-// Get provider's bookings
 router.get('/provider/:providerId', auth, async (req, res) => {
   try {
+    const { page = 1, limit = DEFAULT_PAGE_SIZE } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
     const bookings = await Booking.find({ providerId: req.params.providerId })
       .populate('userId', '-password')
-      .sort({ date: -1 });
-    res.json(bookings);
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalCount = await Booking.countDocuments({ providerId: req.params.providerId });
+
+    res.json({
+      bookings,
+      totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / limit),
+    });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching bookings', error: err.message });
   }
@@ -80,7 +104,55 @@ router.get('/provider/:providerId', auth, async (req, res) => {
 
 // Update booking status (e.g., "completed" or "cancelled")
 
-const allowedStatuses = ['pending', 'completed', 'cancelled'];
+const allowedStatuses = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
+
+router.post('/', auth, async (req, res) => {
+  try {
+    const { userId, providerId, serviceType, date, location, shareLocation } = req.body;
+
+    if (!userId || !providerId || !serviceType || !date) {
+      return res.status(400).json({ message: 'userId, providerId, serviceType, and date are required' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(providerId)) {
+      return res.status(400).json({ message: 'Invalid userId or providerId' });
+    }
+
+    // Ensure the user making the request is the same as userId in body
+    if (req.userId !== userId) {
+      return res.status(403).json({ message: 'Forbidden: You can only create bookings for yourself' });
+    }
+
+    // Optional: Check if provider exists
+    const providerExists = await require('../models/Provider').exists({ _id: providerId });
+    if (!providerExists) {
+      return res.status(404).json({ message: 'Provider not found' });
+    }
+
+    // Validate date is not in the past
+    const bookingDate = new Date(date);
+    const now = new Date();
+    if (bookingDate < now) {
+      return res.status(400).json({ message: 'Booking date cannot be in the past' });
+    }
+
+    const booking = new Booking({
+      userId,
+      providerId,
+      serviceType,
+      date: bookingDate,
+      location: location || null,
+      shareLocation: shareLocation || false
+    });
+
+    await booking.save();
+    console.log(`Booking created by user ${userId} for provider ${providerId}`);
+    res.status(201).json(booking);
+  } catch (err) {
+    console.error('Error creating booking:', err);
+    res.status(500).json({ message: 'Error creating booking', error: err.message });
+  }
+});
 
 router.patch('/booking/status/:id', auth, async (req, res) => {
   try {
@@ -107,6 +179,7 @@ router.patch('/booking/status/:id', auth, async (req, res) => {
     }
 
     booking.status = status;
+    booking.updatedAt = Date.now();
     await booking.save();
 
     console.log(`Booking ${bookingId} status updated to ${status} by user ${req.userId}`);
@@ -189,20 +262,55 @@ router.post('/ratings', auth, async (req, res) => {
   }
 });
 
-// Get all bookings with optional status filter (Active, Completed, Cancelled)
+const DEFAULT_PAGE_SIZE = 10;
+
 router.get('/', auth, async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, page = 1, limit = DEFAULT_PAGE_SIZE } = req.query;
     const filter = status ? { status } : {};
 
+    const skip = (parseInt(page) - 1) * parseInt(limit);
     const bookings = await Booking.find(filter)
       .populate('providerId')
       .populate('userId', '-password')
-      .sort({ date: -1 });
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
-    res.json(bookings);
+    const totalCount = await Booking.countDocuments(filter);
+
+    res.json({
+      bookings,
+      totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / limit),
+    });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching bookings', error: err.message });
+  }
+});
+
+// Add GET route to fetch single booking by ID
+router.get('/booking/:id', auth, async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ message: 'Invalid booking ID' });
+    }
+
+    const booking = await Booking.findById(bookingId)
+      .populate('providerId')
+      .populate('userId', '-password');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json(booking);
+  } catch (err) {
+    console.error('Error fetching booking:', err);
+    res.status(500).json({ message: 'Error fetching booking', error: err.message });
   }
 });
 
