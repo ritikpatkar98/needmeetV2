@@ -11,7 +11,7 @@ import Cleaning from './pages/Cleaning';
 import Painter from './pages/Painting';
 import Carpenter from './pages/Carpenter';
 
-import BookingPage from './pages/Booking';
+import BookingPage from './pages/BookingPage';
 import { ToastContainer } from 'react-toastify';
 import Tutor from './pages/Tutor';
 import BookingDetailPage from './pages/BookingDetailPage';
@@ -47,6 +47,16 @@ const App = () => {
         <Route path="/bookings" element={<BookingPage />} />
         <Route path="/book/:id" element={<BookingDetailPage />} />
         <Route path="/news" element={<NewsPage />} />
+
+        {/* provider */}
+
+        <Route path="/provider/dashboard" element={<div>Provider Dashboard</div>} />
+        <Route path="/provider/services" element={<div>Provider Services</div>} />
+        <Route path="/provider/bookings" element={<div>Provider Bookings</div>} />
+
+        {/* admin */}
+        <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
+        <Route path="/admin/users" element={<div>Admin Users</div>} />
       </Routes>
       <ToastContainer position='top-right' />
     </Router>

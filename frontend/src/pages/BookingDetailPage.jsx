@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-export default function BookingPage() {
+export default function BookingDetailPage() {
   const [formData, setFormData] = useState({
     providerId: '',
     serviceType: '',

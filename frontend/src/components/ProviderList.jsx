@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import userImage from '../../public/default.jpg';
+
 const ProviderList = ({ providers }) => {
   const navigate = useNavigate();
 
@@ -17,7 +19,7 @@ const ProviderList = ({ providers }) => {
       {providers.map(provider => (
         <div key={provider._id} className="provider-card bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
           <img
-            src={provider.profilePicture ? provider.profilePicture : '/default.jpg'}
+            src={userImage}
             alt={provider.name}
             className="w-full h-48 object-cover rounded-md mb-4"
           />

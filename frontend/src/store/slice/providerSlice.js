@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 
 const initialState = {
   providers: [],
+  allProvider :  [],
   loading: false,
   error: null,
 };
@@ -12,6 +13,15 @@ const providerSlice = createSlice({
   name: 'provider',
   initialState,
   reducers: {
+    requestGetAllProviders(state, action) {
+      state.allProvider = [];
+    },
+    successGetAllProviders(state, action) {
+      state.allProvider = action.payload;
+    },
+    failedGetAllProviders(state, action) {
+      state.allProvider = [];
+    },
     requestFetchProviders(state) {
       state.loading = true;
       state.error = null;
@@ -32,7 +42,12 @@ export const {
   requestFetchProviders,
   successFetchProviders,
   failedFetchProviders,
+  requestGetAllProviders,
+  successGetAllProviders,
+  failedGetAllProviders,
 } = providerSlice.actions;
+
+
 
 export const fetchProvidersByServiceType = (serviceType) => async (dispatch) => {
   dispatch(requestFetchProviders());
@@ -46,5 +61,22 @@ export const fetchProvidersByServiceType = (serviceType) => async (dispatch) => 
     toast.error(error.response?.data?.message || `Failed to fetch providers for ${serviceType}`);
   }
 };
+
+
+
+export const  fetchProviders = () => async (dispatch) => {
+  dispatch(requestGetAllProviders());
+  try {
+    const response = await axios.get('http://localhost:8080/api/auth/all/provider',{
+      withCredentials: true,
+    });
+    console.log(response.data);
+    dispatch(successGetAllProviders(response.data));
+    toast.success(`Providers fetched successfully`);
+  } catch (error) {
+    dispatch(failedGetAllProviders(error.message));
+    toast.error(error.response?.data?.message || `Failed to fetch providers`);
+  }
+}
 
 export default providerSlice.reducer;

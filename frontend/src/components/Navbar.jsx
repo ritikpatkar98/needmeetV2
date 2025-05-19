@@ -39,7 +39,7 @@ const Navbar = () => {
           </Link>
         </>
       );
-    } else if (user.role === 'provider') {
+    } else if (user.role === 'provider' ) {
       // Provider links
       return (
         <>
