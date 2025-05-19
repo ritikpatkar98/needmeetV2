@@ -54,10 +54,15 @@ router.get('/:id', async (req, res) => {
 });
 
 // Get providers by service type
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
+
 router.get('/service/:serviceType', async (req, res) => {
   try {
+    const escapedServiceType = escapeRegex(req.params.serviceType);
     const providers = await Provider.find({
-      services: { $regex: req.params.serviceType, $options: 'i' }
+      services: { $in: [new RegExp(escapedServiceType, 'i')] }
     }).populate('userId', '-password').populate('reviews.userId', '-password');
 
     console.log(providers);
@@ -65,6 +70,7 @@ router.get('/service/:serviceType', async (req, res) => {
 
 
   } catch (err) {
+    console.error('Error fetching providers by service type:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });

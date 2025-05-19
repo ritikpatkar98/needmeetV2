@@ -31,6 +31,9 @@ const Navbar = () => {
           <Link to="/admin/users" className="hover:text-blue-500 transition-colors py-2">
             Manage Users
           </Link>
+           <Link to="/news" className="hover:text-blue-500 transition-colors py-2">
+            News
+          </Link>
           <Link to="/admin/providers" className="hover:text-blue-500 transition-colors py-2">
             Manage Providers
           </Link>
@@ -46,6 +49,9 @@ const Navbar = () => {
           <Link to="/provider/services" className="hover:text-blue-500 transition-colors py-2">
             My Services
           </Link>
+           <Link to="/news" className="hover:text-blue-500 transition-colors py-2">
+            News
+          </Link>
           <Link to="/provider/bookings" className="hover:text-blue-500 transition-colors py-2">
             Bookings
           </Link>
@@ -60,6 +66,9 @@ const Navbar = () => {
           </Link>
           <Link to="/services" className="hover:text-blue-500 transition-colors py-2">
             Services
+          </Link>
+          <Link to="/news" className="hover:text-blue-500 transition-colors py-2">
+            News
           </Link>
           <Link to="/bookings" className="hover:text-blue-500 transition-colors py-2">
             My Bookings

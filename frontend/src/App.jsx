@@ -17,6 +17,8 @@ import Tutor from './pages/Tutor';
 import BookingDetailPage from './pages/BookingDetailPage';
 import { useDispatch } from 'react-redux';
 import { fetchUser } from './store/slice/userSlice';
+
+import NewsPage from './pages/NewsPage';
 const App = () => {
 
   const dispatch = useDispatch();
@@ -44,6 +46,7 @@ const App = () => {
         <Route path="/services/Tutor" element={<Tutor />} />
         <Route path="/bookings" element={<BookingPage />} />
         <Route path="/book/:id" element={<BookingDetailPage />} />
+        <Route path="/news" element={<NewsPage />} />
       </Routes>
       <ToastContainer position='top-right' />
     </Router>
