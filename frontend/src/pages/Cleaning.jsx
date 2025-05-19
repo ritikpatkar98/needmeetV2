@@ -3,13 +3,22 @@ import { FaBroom, FaShower, FaHome, FaBuilding, FaStar, FaCheck, FaClock, FaShie
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProvidersByServiceType } from '../store/slice/providerSlice';
 import ProviderList from '../components/ProviderList';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const Cleaning = () => {
 
   const dispatch = useDispatch();
   const { providers, loading, error } = useSelector(state => state.provider);
+  const {isAuthenticated} = useSelector(state => state.user);
+  const navigate = useNavigate();
   useEffect(() => {
-    dispatch(fetchProvidersByServiceType('cleaning'));
+    if(!isAuthenticated){
+      navigate('/');
+      toast.error('Please login to access this page');
+    }else{
+      dispatch(fetchProvidersByServiceType('cleaning'));
+    }
   }, [dispatch]);
 
   return (

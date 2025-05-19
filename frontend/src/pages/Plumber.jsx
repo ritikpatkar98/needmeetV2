@@ -2,15 +2,25 @@ import React, { useState, useEffect } from 'react';
 import ProviderList from '../components/ProviderList';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProvidersByServiceType } from '../store/slice/providerSlice';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 // import axios from 'axios';
 
 const Plumber = () => {
 
   const dispatch = useDispatch();
   const { providers, loading, error } = useSelector(state => state.provider);
-  
+  const { isAuthenticated } = useSelector(state => state.user);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    dispatch(fetchProvidersByServiceType('plumber'));
+    if (!isAuthenticated) {
+      navigate('/');
+      toast.error('Please login to access this page');
+    } else {
+
+      dispatch(fetchProvidersByServiceType('plumber'));
+    }
   }, [dispatch]);
 
   return (
@@ -26,9 +36,9 @@ const Plumber = () => {
 
       {/* Services Section */}
       <div className="services-section py-16 px-4 max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">Our Carpentry Services</h2>
-            <ProviderList providers={providers} />
-       </div>
+        <h2 className="text-3xl font-bold text-center mb-12">Our Carpentry Services</h2>
+        <ProviderList providers={providers} />
+      </div>
 
       {/* Why Choose Us */}
       <div className="bg-gray-50 py-16 px-4">

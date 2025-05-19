@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Calendar, RefreshCw, ExternalLink } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const mockData = {
   status: "ok",
@@ -36,6 +38,8 @@ export default function NewsPage() {
   const [searchTerm, setSearchTerm] = useState('apple');
   const [fromDate, setFromDate] = useState(formatDate(new Date()));
   const [toDate, setToDate] = useState(formatDate(new Date()));
+  const { isAuthenticated } = useSelector(state => state.user);
+  const navigate = useNavigate();
 
   function formatDate(date) {
     const year = date.getFullYear();
@@ -45,7 +49,13 @@ export default function NewsPage() {
   }
 
   useEffect(() => {
-    fetchNews();
+    if (!isAuthenticated) {
+      navigate('/');
+      toast.error('Please login to access this page');
+    } else {
+
+      fetchNews();
+    }
   }, []);
 
   const fetchNews = async () => {
@@ -85,9 +95,9 @@ export default function NewsPage() {
 
   function formatPublishedDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
       year: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
@@ -107,7 +117,7 @@ export default function NewsPage() {
         <h1 className="text-3xl font-bold mb-2">Apple News Dashboard</h1>
         <p className="text-gray-600">Latest news and updates about Apple Inc.</p>
       </div>
-      
+
       {/* Search and Filter Controls */}
       <div className="mb-8 bg-gray-100 p-4 rounded-lg">
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
@@ -125,7 +135,7 @@ export default function NewsPage() {
               />
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex items-center gap-2">
               <label className="whitespace-nowrap">From:</label>
@@ -141,7 +151,7 @@ export default function NewsPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <label className="whitespace-nowrap">To:</label>
               <div className="relative">
@@ -157,9 +167,9 @@ export default function NewsPage() {
               </div>
             </div>
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
@@ -167,7 +177,7 @@ export default function NewsPage() {
           </button>
         </form>
       </div>
-      
+
       {/* News Content */}
       <div className="mb-8">
         {loading && (
@@ -175,13 +185,13 @@ export default function NewsPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         )}
-        
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
-        
+
         {!loading && !error && (
           <>
             <div className="mb-4">
@@ -189,15 +199,15 @@ export default function NewsPage() {
                 Found {articles.length} articles for "{searchTerm}"
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {articles.map((article, index) => (
                 <div key={index} className="border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition">
                   <div className="h-48 bg-gray-200">
                     {article.urlToImage ? (
-                      <img 
-                        src="/api/placeholder/400/320" 
-                        alt={article.title} 
+                      <img
+                        src="/api/placeholder/400/320"
+                        alt={article.title}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -206,7 +216,7 @@ export default function NewsPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="p-4">
                     <div className="flex items-center mb-2">
                       <span className="text-sm text-gray-500">
@@ -217,23 +227,23 @@ export default function NewsPage() {
                         {formatPublishedDate(article.publishedAt)}
                       </span>
                     </div>
-                    
+
                     <h3 className="font-bold text-lg mb-2 line-clamp-2">
                       {article.title}
                     </h3>
-                    
+
                     <p className="text-gray-600 mb-4 line-clamp-3">
                       {article.description || truncateText(article.content, 120)}
                     </p>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500">
                         {article.author ? `By ${article.author}` : 'Unknown author'}
                       </span>
-                      
-                      <a 
-                        href={article.url} 
-                        target="_blank" 
+
+                      <a
+                        href={article.url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center text-blue-600 hover:text-blue-800 text-sm"
                       >
@@ -248,7 +258,7 @@ export default function NewsPage() {
           </>
         )}
       </div>
-      
+
       <div className="text-center text-sm text-gray-500 mt-8">
         <p>Data powered by NewsAPI • Last updated: {new Date().toLocaleString()}</p>
       </div>

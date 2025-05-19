@@ -1,7 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const Tutor = () => {
+  const { isAuthenticated } = useSelector(state => state.user);
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/');
+      toast.error('Please login to access this page');
+    }
+  }, [isAuthenticated]);
   // Animation variants
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -19,7 +31,7 @@ const Tutor = () => {
   return (
     <div className="font-sans">
       {/* Hero Section */}
-      <motion.div 
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
@@ -31,7 +43,7 @@ const Tutor = () => {
         <motion.p variants={fadeIn} className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
           Personalized learning with certified educators for all academic levels
         </motion.p>
-        <motion.button 
+        <motion.button
           variants={fadeIn}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -43,7 +55,7 @@ const Tutor = () => {
 
       {/* Subjects Section */}
       <div className="py-16 px-4 max-w-6xl mx-auto">
-        <motion.h2 
+        <motion.h2
           initial="hidden"
           animate="visible"
           variants={fadeIn}
@@ -51,8 +63,8 @@ const Tutor = () => {
         >
           Our Tutoring Subjects
         </motion.h2>
-        
-        <motion.div 
+
+        <motion.div
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
@@ -102,7 +114,7 @@ const Tutor = () => {
               icon: "📊"
             }
           ].map((subject, index) => (
-            <motion.div 
+            <motion.div
               key={subject.id}
               variants={fadeIn}
               whileHover={{ y: -5 }}
@@ -125,7 +137,7 @@ const Tutor = () => {
       {/* Featured Tutors */}
       <div className="bg-gray-50 py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <motion.h2 
+          <motion.h2
             initial="hidden"
             animate="visible"
             variants={fadeIn}
@@ -133,8 +145,8 @@ const Tutor = () => {
           >
             Our Expert Tutors
           </motion.h2>
-          
-          <motion.div 
+
+          <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
@@ -166,16 +178,16 @@ const Tutor = () => {
                 image: "https://randomuser.me/api/portraits/women/68.jpg"
               }
             ].map((tutor) => (
-              <motion.div 
+              <motion.div
                 key={tutor.id}
                 variants={fadeIn}
                 whileHover={{ scale: 1.02 }}
                 className="tutor-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all"
               >
                 <div className="relative h-48 bg-gray-200">
-                  <img 
-                    src={tutor.image} 
-                    alt={tutor.name} 
+                  <img
+                    src={tutor.image}
+                    alt={tutor.name}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute bottom-4 right-4 bg-white px-3 py-1 rounded-full shadow-sm flex items-center">
@@ -200,7 +212,7 @@ const Tutor = () => {
       {/* Why Choose Us */}
       <div className="py-16 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="max-w-6xl mx-auto">
-          <motion.h2 
+          <motion.h2
             initial="hidden"
             animate="visible"
             variants={fadeIn}
@@ -208,8 +220,8 @@ const Tutor = () => {
           >
             Why Learn With Us
           </motion.h2>
-          
-          <motion.div 
+
+          <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
@@ -247,7 +259,7 @@ const Tutor = () => {
                 description: "90% of students show significant improvement"
               }
             ].map((feature, index) => (
-              <motion.div 
+              <motion.div
                 key={index}
                 variants={fadeIn}
                 whileHover={{ scale: 1.03 }}
@@ -263,7 +275,7 @@ const Tutor = () => {
       </div>
 
       {/* CTA Section */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
@@ -272,14 +284,14 @@ const Tutor = () => {
         <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Start Learning?</h2>
         <p className="text-xl mb-8 max-w-2xl mx-auto">Join thousands of students achieving their academic goals with our tutors</p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="bg-white hover:bg-gray-100 text-blue-600 font-bold py-3 px-8 rounded-full text-lg shadow-lg"
           >
             Find Your Tutor
           </motion.button>
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="bg-transparent hover:bg-blue-700 border-2 border-white text-white font-bold py-3 px-8 rounded-full text-lg"

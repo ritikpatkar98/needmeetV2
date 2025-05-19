@@ -1,15 +1,22 @@
 // src/pages/ServiceDetailPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const ServiceDetailPage = () => {
   const { id } = useParams();
   const [provider, setProvider] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isAuthenticated } = useSelector(state => state.user);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/');
+      toast.error('Please login to access this page');
+    }
     const fetchProvider = async () => {
       try {
         const response = await axios.get(`http://localhost:5000/api/providers/${id}`);
@@ -20,7 +27,7 @@ const ServiceDetailPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProvider();
   }, [id]);
 
