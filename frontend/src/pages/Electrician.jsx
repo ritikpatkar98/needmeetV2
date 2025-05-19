@@ -1,27 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProvidersByServiceType } from '../store/slice/providerSlice';
 import ProviderList from '../components/ProviderList';
-import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Electrician = () => {
-
   const dispatch = useDispatch();
   const { providers, loading, error } = useSelector(state => state.provider);
+  const navigate = useNavigate();
   
   useEffect(() => {
     dispatch(fetchProvidersByServiceType('electrician'));
   }, [dispatch]);
+
+  const handleBookNowClick = () => {
+    navigate('/bookings');
+  };
 
   return (
     <div>
       {/* Hero Section */}
       <div className="services-section py-16 px-4 max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12">Our Electrical Services</h2>
-        <div className="carpentry-service-page">
+        <div className="electrician-service-page">
           <div className="hero-section bg-blue-50 py-16 px-4 text-center">
-            <h1 className="text-4xl font-bold text-blue-800 mb-4">Expert Carpentry Services</h1>
-            <p className="text-xl text-gray-600 mb-8">Book skilled carpenters for all your wooden furniture and fixture needs</p>
+            <h1 className="text-4xl font-bold text-blue-800 mb-4">Expert Electrical Services</h1>
+            <p className="text-xl text-gray-600 mb-8">Book skilled electricians for all your electrical needs</p>
+            <button
+              onClick={handleBookNowClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg"
+            >
+              Book Now
+            </button>
+          </div>
+=======
             <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg">
               Book Now
             </button>

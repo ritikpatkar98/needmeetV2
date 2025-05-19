@@ -8,7 +8,7 @@ import ServicesPage from './pages/ServicesPage';
 import Plumber from './pages/Plumber';
 import Electrician from './pages/Electrician';
 import Cleaning from './pages/Cleaning';
-import Painter from './pages/Painter';
+import Painter from './pages/Painting';
 import Carpenter from './pages/Carpenter';
 
 import BookingPage from './pages/Booking';
