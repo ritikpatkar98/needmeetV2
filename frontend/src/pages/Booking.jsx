@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -9,28 +9,40 @@ import {
   cancelBooking,
 } from '../store/slice/bookingSlice';
 
+const initialFormData = {
+  providerId: '',
+  serviceType: '',
+  date: '',
+  location: '',
+  shareLocation: false,
+};
+
 const BookingPage = () => {
-  const [formData, setFormData] = useState({
-    providerId: '',
-    serviceType: '',
-    date: '',
-    location: '',
-    shareLocation: false,
-  });
-  const [statusFilter, setStatusFilter] = useState('');
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Get userId and bookings from Redux store
+  const [formData, setFormData] = useState(initialFormData);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [providers, setProviders] = useState([]);
+
   const userId = useSelector((state) => state.user.user?._id);
   const bookings = useSelector((state) => state.booking.bookings);
   const loading = useSelector((state) => state.booking.loading);
   const error = useSelector((state) => state.booking.error);
 
-  // Fetch providers (mocked for simplicity)
-  const [providers, setProviders] = useState([]);
+  useEffect(() => {
+    if (location?.state) {
+      const { providerId, serviceType } = location.state;
+      setFormData((prev) => ({
+        ...prev,
+        providerId: providerId || '',
+        serviceType: serviceType || '',
+      }));
+    }
+  }, [location]);
+
   useEffect(() => {
     const fetchProviders = async () => {
       try {
@@ -48,7 +60,6 @@ const BookingPage = () => {
     fetchProviders();
   }, []);
 
-  // Fetch user bookings
   const fetchBookings = useCallback(() => {
     if (userId) {
       dispatch(fetchUserBookings(userId));
@@ -59,7 +70,6 @@ const BookingPage = () => {
     fetchBookings();
   }, [fetchBookings]);
 
-  // Handle form input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -69,7 +79,6 @@ const BookingPage = () => {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // Validate form
   const validateForm = useCallback(() => {
     const newErrors = {};
     if (!formData.providerId) newErrors.providerId = 'Provider is required';
@@ -79,7 +88,6 @@ const BookingPage = () => {
     return newErrors;
   }, [formData]);
 
-  // Handle booking submission
   const handleBooking = async (e) => {
     e.preventDefault();
     const validationErrors = validateForm();
@@ -92,32 +100,30 @@ const BookingPage = () => {
     try {
       await dispatch(createBooking({ ...formData, userId })).unwrap();
       fetchBookings();
-      setFormData({ providerId: '', serviceType: '', date: '', location: '', shareLocation: false });
+      setFormData(initialFormData);
       setErrors({});
     } catch (err) {
-      setErrors({ form: err || 'Error creating booking' });
+      setErrors({ form: err?.message || 'Error creating booking' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle status update
   const handleStatusUpdate = async (bookingId, status) => {
     try {
       await dispatch(updateBookingStatus(bookingId, status)).unwrap();
       fetchBookings();
     } catch (err) {
-      setErrors({ form: err || 'Error updating booking' });
+      setErrors({ form: err?.message || 'Error updating booking' });
     }
   };
 
-  // Handle booking cancellation
   const handleCancelBooking = async (bookingId) => {
     try {
       await dispatch(cancelBooking(bookingId)).unwrap();
       fetchBookings();
     } catch (err) {
-      setErrors({ form: err || 'Error cancelling booking' });
+      setErrors({ form: err?.message || 'Error cancelling booking' });
     }
   };
 
@@ -145,12 +151,12 @@ const BookingPage = () => {
           <br />
           <label>
             Service Type:
-            <input
-              type="text"
-              name="serviceType"
-              value={formData.serviceType}
-              onChange={handleChange}
-            />
+            <select name="serviceType" value={formData.serviceType} onChange={handleChange}>
+              <option value="">Select Service Type</option>
+              <option value="Plumber">Plumber</option>
+              <option value="Electrician">Electrician</option>
+              <option value="Cleaning">Cleaning</option>
+            </select>
             {errors.serviceType && <span style={{ color: 'red' }}>{errors.serviceType}</span>}
           </label>
           <br />
@@ -180,24 +186,6 @@ const BookingPage = () => {
             {isSubmitting || loading ? 'Booking...' : 'Book'}
           </button>
         </form>
-
-        <h2>Your Bookings</h2>
-        {loading && <p>Loading bookings...</p>}
-        {bookings.length === 0 && !loading && <p>No bookings found.</p>}
-        <ul>
-          {bookings.map((booking) => (
-            <li key={booking._id}>
-              <p>
-                Provider: {booking.providerId?.name || 'N/A'} | Service: {booking.serviceType} | Date:{' '}
-                {new Date(booking.date).toLocaleDateString()} | Status: {booking.status}
-              </p>
-              <button onClick={() => handleStatusUpdate(booking._id, 'completed')}>
-                Mark as Completed
-              </button>
-              <button onClick={() => handleCancelBooking(booking._id)}>Cancel Booking</button>
-            </li>
-          ))}
-        </ul>
       </div>
     </>
   );

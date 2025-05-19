@@ -35,7 +35,7 @@ const LoginPage = () => {
             alt="Login "
             className="w-16 h-16 mx-auto mb-2"
           />
-          <h2 className="text-3xl font-extrabold text-blue-700">Welcome Back</h2>
+          <h2 className="text-3xl font-extrabold text-blue-700">Welcome </h2>
           <p className="text-gray-500 text-sm mt-1">Please login to your account</p>
         </div>
 

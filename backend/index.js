@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser');
 
 // Initialize app first
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8081;
 
 // Import routes after app is initialized
 const authRoutes = require('./routes/auth');

@@ -58,7 +58,7 @@ router.get('/service/:serviceType', async (req, res) => {
   try {
     const providers = await Provider.find({
       services: { $regex: req.params.serviceType, $options: 'i' }
-    }).populate('userId', '-password').populate('reviews.userId', '-password');
+    });
 
     console.log(providers);
     res.json(providers);
